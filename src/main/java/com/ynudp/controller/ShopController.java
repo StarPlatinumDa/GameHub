@@ -7,18 +7,11 @@ import com.ynudp.dto.Result;
 import com.ynudp.entity.Shop;
 import com.ynudp.service.ShopService;
 import com.ynudp.utils.SystemConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-
-/**
- * <p>
- * 前端控制器
- * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
- */
+@Slf4j
 @RestController
 @RequestMapping("/shop")
 public class ShopController {
@@ -33,7 +26,10 @@ public class ShopController {
      */
     @GetMapping("/{id}")
     public Result queryShopById(@PathVariable("id") Long id) {
-        return Result.ok(shopService.getById(id));
+        log.info("查询商铺信息,{}",id);
+        Result result=shopService.queryShopById(id);
+
+        return result;
     }
 
     /**
@@ -46,7 +42,7 @@ public class ShopController {
         // 写入数据库
         shopService.save(shop);
         // 返回店铺id
-        return Result.ok(shop.getId());
+        return Result.success(shop.getId());
     }
 
     /**
@@ -56,9 +52,10 @@ public class ShopController {
      */
     @PutMapping
     public Result updateShop(@RequestBody Shop shop) {
+        log.info("更新商铺信息,{}",shop);
         // 写入数据库
-        shopService.updateById(shop);
-        return Result.ok();
+        shopService.updateShop(shop);
+        return Result.success();
     }
 
     /**
@@ -77,7 +74,7 @@ public class ShopController {
                 .eq("type_id", typeId)
                 .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
         // 返回数据
-        return Result.ok(page.getRecords());
+        return Result.success(page.getRecords());
     }
 
     /**
@@ -96,6 +93,6 @@ public class ShopController {
                 .like(StrUtil.isNotBlank(name), "name", name)
                 .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
         // 返回数据
-        return Result.ok(page.getRecords());
+        return Result.success(page.getRecords());
     }
 }

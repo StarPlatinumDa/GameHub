@@ -1,16 +1,15 @@
 package com.ynudp.service;
 
+import com.ynudp.dto.Result;
 import com.ynudp.entity.VoucherOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 
-/**
- * <p>
- *  服务类
- * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
- */
+
 public interface VoucherOrderService extends IService<VoucherOrder> {
 
+    Result seckillVoucher(Long voucherId);
+
+    Result createVoucherOrder(Long voucherId);
+
+    void createVoucherOrderAsyn(VoucherOrder order);
 }
