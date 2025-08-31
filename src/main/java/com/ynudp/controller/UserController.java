@@ -1,6 +1,7 @@
 package com.ynudp.controller;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import com.ynudp.dto.LoginFormDTO;
 import com.ynudp.dto.Result;
 import com.ynudp.dto.UserDTO;
@@ -86,5 +87,22 @@ public class UserController {
         info.setUpdateTime(null);
         // 返回
         return Result.success(info);
+    }
+
+    /**
+     * 查询用户详情
+     * @param userId 用户id
+     * @return 用户详情
+     */
+    @GetMapping("/{id}")
+    public Result queryUserById(@PathVariable("id") Long userId){
+        // 查询详情
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.success();
+        }
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        // 返回
+        return Result.success(userDTO);
     }
 }

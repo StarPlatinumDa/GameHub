@@ -17,8 +17,14 @@ import java.util.UUID;
 @RequestMapping("upload")
 public class UploadController {
 
+    /**
+     * 保存到本地 nginx前端中 C:\Users\starplatinum\Desktop\java\comment\nginx-1.18.0\html\hmdp\imgs
+     * @param image
+     * @return
+     */
     @PostMapping("blog")
     public Result uploadImage(@RequestParam("file") MultipartFile image) {
+        log.info("上传文件：{}", image.getOriginalFilename());
         try {
             // 获取原始文件名称
             String originalFilename = image.getOriginalFilename();

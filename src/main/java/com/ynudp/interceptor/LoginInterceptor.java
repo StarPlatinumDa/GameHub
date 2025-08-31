@@ -90,6 +90,5 @@ public class LoginInterceptor implements HandlerInterceptor {
         // 移除用户，避免内存泄漏
         // 因为线程池，线程复用，线程池会复用线程，保存数据，数据会保存在ThreadLocal中，不清理的话，数据被其他用户看到，导致泄漏
         UserHolder.removeUser();
-
     }
 }
