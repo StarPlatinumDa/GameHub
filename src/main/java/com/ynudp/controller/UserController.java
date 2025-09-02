@@ -11,8 +11,6 @@ import com.ynudp.service.UserInfoService;
 import com.ynudp.service.UserService;
 import com.ynudp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -105,4 +103,26 @@ public class UserController {
         // 返回
         return Result.success(userDTO);
     }
+
+    /**
+     * 用户签到
+     * @return
+     */
+    @PostMapping("/sign")
+    public Result sign(){
+        log.info("用户签到");
+        return userService.sign();
+    }
+
+    /**
+     * 统计连续签到天数
+     * @return
+     */
+    @GetMapping("/sign/count")
+    public Result signCount(){
+        log.info("统计连续签到天数");
+        return userService.signCount();
+    }
+
+
 }

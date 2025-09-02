@@ -2,24 +2,18 @@ package com.ynudp.interceptor;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.ynudp.dto.UserDTO;
-import com.ynudp.entity.User;
 import com.ynudp.utils.RedisConstants;
 import com.ynudp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 
 
 /**

@@ -2,7 +2,6 @@ package com.ynudp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.ynudp.controller.UserController;
 import com.ynudp.dto.Result;
 import com.ynudp.dto.UserDTO;
 import com.ynudp.entity.Follow;
@@ -11,7 +10,6 @@ import com.ynudp.mapper.FollowMapper;
 import com.ynudp.mapper.UserMapper;
 import com.ynudp.service.FollowService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ynudp.service.UserService;
 import com.ynudp.utils.UserHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

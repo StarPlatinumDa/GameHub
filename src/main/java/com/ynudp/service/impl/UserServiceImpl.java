@@ -16,6 +16,7 @@ import com.ynudp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,7 +24,9 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -118,6 +121,65 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
 //        session.setAttribute("user", userDTO);
         return Result.success(token);
+    }
+
+    @Override
+    public Result sign() {
+        // 获取当前用户
+        Long userId = UserHolder.getUser().getId();
+        // 获取当前日期
+        LocalDate now = LocalDate.now();
+        // 拼接获得key
+        String keySuffix = now.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String key = "sign:"+userId+":"+keySuffix;
+        // 获取今天是本月的第几天
+        int dayOfMonth = now.getDayOfMonth();// 1-31所以后续要减一
+        // 写入bitmap
+        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
+        valueOperations.setBit(key,dayOfMonth-1,true);
+        return Result.success();
+    }
+
+    /**
+     * 统计连续签到天数
+     * @return
+     */
+    public Result signCount() {
+        // 获取当前用户
+        Long userId = UserHolder.getUser().getId();
+        // 获取当前日期
+        LocalDate now = LocalDate.now();
+        // 拼接获得key
+        String keySuffix = now.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String key = "sign:"+userId+":"+keySuffix;
+        // 获取今天是本月的第几天,就查几个bit位
+        int dayOfMonth = now.getDayOfMonth();
+
+
+        // 不一样：获取本月截至今天为止的所有签到记录，返回的是一个十进制的数字
+        ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
+        // 返回集合是因为bitfield可以同时做多个命令，这里我们只做一个，取0即可
+        List<Long> result = valueOperations.bitField(key,
+                BitFieldSubCommands.create()
+                        .get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth)).valueAt(0));
+        if (result == null){
+            // 没有任何签到记录
+            return Result.success();
+        }
+        Long num = result.get(0);
+        if (num == null|| num == 0L)return Result.success();
+        // 循环遍历
+        int count=0;
+        while (num != 0){
+            if(num%2==0){
+                // 当前最后一位为0，未签到(即找到第一次不签到)
+                break;
+            }else {
+                count++;
+                num = num/2;
+            }
+        }
+        return Result.success(count);
     }
 
     private User createUserWithPhone(String phone) {

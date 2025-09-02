@@ -8,10 +8,10 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @EnableAspectJAutoProxy(exposeProxy = true)
 @MapperScan("com.ynudp.mapper")
 @SpringBootApplication
-public class HmDianPingApplication {
+public class GameHubApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(HmDianPingApplication.class, args);
+        SpringApplication.run(GameHubApplication.class, args);
     }
 
 }

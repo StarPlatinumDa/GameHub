@@ -2,7 +2,6 @@ package com.ynudp.controller;
 
 
 import com.ynudp.dto.Result;
-import com.ynudp.mapper.FollowMapper;
 import com.ynudp.service.FollowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

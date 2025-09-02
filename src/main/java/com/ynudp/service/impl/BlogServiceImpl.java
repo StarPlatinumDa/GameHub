@@ -10,16 +10,13 @@ import com.ynudp.entity.Blog;
 import com.ynudp.entity.Follow;
 import com.ynudp.entity.User;
 import com.ynudp.mapper.BlogMapper;
-import com.ynudp.mapper.FollowMapper;
 import com.ynudp.service.BlogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ynudp.service.FollowService;
 import com.ynudp.service.UserService;
 import com.ynudp.utils.SystemConstants;
 import com.ynudp.utils.UserHolder;
-import jodd.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -28,7 +25,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @Service

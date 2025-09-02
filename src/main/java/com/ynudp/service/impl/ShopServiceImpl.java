@@ -3,6 +3,7 @@ package com.ynudp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ynudp.dto.Result;
 import com.ynudp.entity.Shop;
 import com.ynudp.mapper.ShopMapper;
@@ -11,13 +12,25 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ynudp.utils.CacheClient;
 import com.ynudp.utils.RedisConstants;
 import com.ynudp.utils.RedisData;
+import com.ynudp.utils.SystemConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Circle;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.redis.connection.RedisGeoCommands;
+import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +47,8 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements Sh
 
     // 不自己写线程，性能不好，用线程池
     private static final ExecutorService CACHE_REBUILD_EXECUTOR= Executors.newFixedThreadPool(10);
-
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
 
     /**
@@ -260,4 +274,63 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements Sh
         redisTemplate.opsForValue().set(RedisConstants.SHOP_KEY+id, JSONUtil.toJsonStr(redisData));
     }
 
+    @Override
+    public Result queryShasdpByType(Integer typeId, Integer current, Double x, Double y) {
+        // 1.判断是否需要根据坐标查询(即有无x，y参数)
+        if(x==null||y==null){
+            // 如果没有坐标就直接用数据库分页查询，根据类型分页查询
+            Page<Shop> page = query()
+                    .eq("type_id", typeId)
+                    .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
+            return Result.success(page.getRecords());
+        }
+        // 2.计算分页参数
+        // 页码从0开始，所以减一
+//        int from = (current-1)*SystemConstants.DEFAULT_PAGE_SIZE;
+        int from = (current-1)*6; // 页大小设置成6，不然前端不到底端不触发滚动加载
+        // 到下一页结束  即第一页是0-5
+//        int end = current*SystemConstants.DEFAULT_PAGE_SIZE;
+        int end = current*6;
+        // 3.查询redis，按照距离排序，分页 结果：shopId，distance
+        GeoOperations<String, String> geoOperations = stringRedisTemplate.opsForGeo();
+        String key= "shop:geo:"+typeId;
+        // 普通的GEORADIUS命令能新增参数 limit(end)，但好像不能返回distance
+        GeoResults<RedisGeoCommands.GeoLocation<String>> results = geoOperations.radius(key,
+                new Circle(x, y, 5000),
+                RedisGeoCommands.GeoRadiusCommandArgs.newGeoRadiusArgs().includeDistance().limit(end));
+        // GEORADIUS g1 116.397904 39.909005 10 km WITHDIST 用search，底层调用还是radius
+        // 只能limit(end)指定结尾范围，from不能指定，所以要手动截取
+//        GeoResults<RedisGeoCommands.GeoLocation<String>> results = geoOperations.search(key, GeoReference.fromCoordinate(x, y),
+//                new Distance(5000),
+//                RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().limit(end));
+        // 从结果中拿到shopId
+        if(results==null){
+            return Result.success(new ArrayList<>());
+        }
+        List<GeoResult<RedisGeoCommands.GeoLocation<String>>> list = results.getContent();
+        // 截取from
+        if (list.size()<=from){
+            // 没有下一页
+            return Result.success(new ArrayList<>());
+        }
+
+        ArrayList<Long> ids = new ArrayList<>();
+        Map<String, Distance> distanceMap = new HashMap<>();
+        list.stream().skip(from).forEach(item-> {
+            System.out.println(item);
+            String shopId = item.getContent().getName();
+            ids.add(Long.valueOf(shopId));
+            Distance distance = item.getDistance();
+            distanceMap.put(shopId, distance);
+        });
+        // 根据id查询店铺
+        String join = StrUtil.join(",", ids);
+        List<Shop> shopList = query().in("id", ids).last("ORDER BY FIELD(id," + join + ")").list();
+        for (Shop shop : shopList) {
+            // 取出distance对象，调用getValue就是对应的double值
+            shop.setDistance(distanceMap.get(shop.getId().toString()).getValue());
+        }
+        // 返回
+        return Result.success(shopList);
+    }
 }
